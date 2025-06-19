@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ellevate</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #fff0f5; /* Light pink background */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+        
+        .chat-header {
+            background: linear-gradient(to right, #ff69b4, #ffb6c1);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(255, 105, 180, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-header img {
+            height: 40px;
+            margin-right: 15px;
+        }
+        
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 70%;
+            padding: 12px 20px;
+            border-radius: 20px;
+            margin-bottom: 5px;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #f0f0f0;
+            color: #333;
+            border-top-right-radius: 5px;
+        }
+        
+        .bot-message {
+            align-self: flex-start;
+            background: linear-gradient(to right, #ff69b4, #ffb6c1);
+            color: white;
+            border-top-left-radius: 5px;
+        }
+        
+        .message-time {
+            font-size: 10px;
+            margin-top: 5px;
+            opacity: 0.7;
+            text-align: right;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid #ffb6c1;
+        }
+        
+        #message-input {
+            flex-grow: 1;
+            padding: 12px 20px;
+            border: 2px solid #ffb6c1;
+            border-radius: 30px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #message-input:focus {
+            border-color: #ff69b4;
+        }
+        
+        #send-button {
+            background: linear-gradient(to right, #ff69b4, #ffb6c1);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 25px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        #send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+        }
+        
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            padding: 12px 20px;
+            background: rgba(255, 182, 193, 0.2);
+            border-radius: 20px;
+            margin-bottom: 10px;
+            align-self: flex-start;
+            width: fit-content;
+        }
+        
+        .typing-indicator span {
+            height: 10px;
+            width: 10px;
+            float: left;
+            margin: 0 1px;
+            background-color: #ff69b4;
+            display: block;
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+        
+        .typing-indicator span:nth-of-type(1) {
+            animation: typing 1s infinite;
+        }
+        
+        .typing-indicator span:nth-of-type(2) {
+            animation: typing 1s infinite 0.2s;
+        }
+        
+        .typing-indicator span:nth-of-type(3) {
+            animation: typing 1s infinite 0.4s;
+        }
+        
+        @keyframes typing {
+            0% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.4; transform: scale(1); }
+        }
+        
+        /* Welcome message with quotes */
+        .welcome-container {
+            text-align: center;
+            font-style: italic;
+            opacity: 0.7;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .quote {
+            color: #ff69b4;
+            font-weight: bold;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        /* Audio button */
+        #audio-button {
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: transform 0.3s;
+        }
+        
+        #audio-button:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Emoji decorations */
+        .emoji-decoration {
+            position: fixed;
+            font-size: 24px;
+            opacity: 0.2;
+            z-index: -1;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-100px) rotate(180deg); }
+            100% { transform: translateY(0) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Emoji decorations -->
+    <div class="emoji-decoration" style="top: 10%; left: 10%;">💖</div>
+    <div class="emoji-decoration" style="top: 20%; right: 15%;">💅</div>
+    <div class="emoji-decoration" style="bottom: 30%; left: 20%;">✨</div>
+    <div class="emoji-decoration" style="bottom: 20%; right: 10%;">👑</div>
+    <div class="emoji-decoration" style="top: 50%; left: 15%;">💝</div>
+    <div class="emoji-decoration" style="top: 40%; right: 20%;">🌸</div>
+    
+    <div class="chat-container">
+        <div class="chat-header">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9ImZlYXRoZXIgZmVhdGhlci1oZWFydCI+PHBhdGggZD0iTTIwLjg0IDQuNjFhNS41IDUuNSAwIDAgMC03Ljc4IDBMMTIgNS42N2wtMS4wNi0xLjA2YTUuNSA1LjUgMCAwIDAtNy43OCA3Ljc4bDEuMDYgMS4wNkwxMiAyMS4yM2w3Ljc4LTcuNzggMS4wNi0xLjA2YTUuNSA1LjUgMCAwIDAgMC03Ljc4eiI+PC9wYXRoPjwvc3ZnPg==" alt="Heart">
+            Ellevate - Your mental wellness partner!!
+            <button id="audio-button" title="Toggle audio">🔈</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="welcome-container">
+                <div class="quote">"Exercise gives you endorphins. Endorphins make you happy!"</div>
+                <div class="quote">"What, like it's hard?"</div>
+                <div class="quote">"The rules of self-care are simple and finite."</div>
+            </div>
+            <!-- Messages will be inserted here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Tell Elle how you're feeling today...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Elle Woods Wellbeing Bot implementation
+        class ElleWoodsWellbeingBot {
+            constructor() {
+                this.name = "Elle";
+                this.phrases = [
+                    "What, like it's hard?",
+                    "Exercise gives you endorphins. Endorphins make you happy!",
+                    "Whoever said orange is the new pink was seriously disturbed.",
+                    "The rules of self-care are simple and finite.",
+                    "You must always have faith in yourself!",
+                    "I'm taking action in my own life!",
+                    "I totally believe in myself!",
+                    "We did it!"
+                ];
+                this.encouragements = [
+                    "You are so totally capable of handling this!",
+                    "Omigod, you're doing amazing sweetie!",
+                    "I'm, like, super proud of you right now!",
+                    "This is just a bend in the road, not the end of the road!",
+                    "You've got this! Seriously!",
+                    "Just like Elle Woods doesn't give up, neither should you!",
+                    "The hardest part is believing in yourself, once you do that - you're unstoppable!",
+                    "You have so much potential, babe. It’s practically glowing off of you.",
+                    "If they doubt you, they clearly didn’t read your résumé or feel your energy.",
+                    "You're smart, stylish, and seriously unstoppable.",
+                    "You’re not being dramatic, you're being passionate—and there's a difference!",
+                    "You’ve got the brain and the beauty—dangerous combo, isn’t it?",
+                    "That anxiety? Not stronger than your ambition.",
+                    "Rest is radical. You deserve it. Periodttt.",
+                    "Baby steps are still steps. Elle didn’t become iconic in a day.",
+                    "No one else gets to define your enough-ness. You are enough.",
+                    "Confidence isn’t a mood. It’s your default setting.",
+                    "You don’t need to earn rest. You deserve it."
+                ];
+                this.audioEnabled = false;
+                this.initializeAudio();
+            }
+
+            initializeAudio() {
+                // Setup speech synthesis if available
+                this.synth = window.speechSynthesis;
+                this.voice = null;
+
+                if (this.synth) {
+                    // Try to load voices
+                    const loadVoices = () => {
+                        const voices = this.synth.getVoices();
+                        // Try to find a female voice
+                        this.voice = voices.find(voice => 
+                            voice.name.includes("female") || 
+                            voice.name.includes("woman") ||
+                            voice.name.includes("girl") ||
+                            voice.name.includes("Female")
+                        );
+                        
+                        // If no female voice found, use the first available
+                        if (!this.voice && voices.length > 0) {
+                            this.voice = voices[0];
+                        }
+                    };
+
+                    // Chrome needs a delay to load voices
+                    if (this.synth.onvoiceschanged !== undefined) {
+                        this.synth.onvoiceschanged = loadVoices;
+                    }
+                    
+                    // Initial load attempt
+                    loadVoices();
+                }
+            }
+
+            speak(text) {
+                if (this.synth && this.voice && this.audioEnabled) {
+                    // Cancel any ongoing speech
+                    this.synth.cancel();
+                    
+                    // Create a new utterance
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.voice = this.voice;
+                    utterance.pitch = 1.2; // Slightly higher pitch
+                    utterance.rate = 1.1;  // Slightly faster rate
+                    
+                    // Speak
+                    this.synth.speak(utterance);
+                }
+            }
+
+            toggleAudio() {
+                this.audioEnabled = !this.audioEnabled;
+                return this.audioEnabled;
+            }
+
+            getRandomElement(array) {
+                return array[Math.floor(Math.random() * array.length)];
+            }
+
+            addEmojis(text) {
+                const emojis = ["💖", "💕", "💅", "✨", "👑", "💋", "🌸", "🩷", "💝"];
+                const shouldAddEmoji = Math.random() > 0.5;
+                
+                if (shouldAddEmoji) {
+                    return `${text} ${this.getRandomElement(emojis)}`;
+                }
+                return text;
+            }
+
+            addElleism(text) {
+                const elleisms = [
+                    " Seriously!",
+                    " Hello!",
+                    " Totally!",
+                    " So true!",
+                    " Like, for sure!",
+                    " Obvi!"
+                ];
+                
+                const shouldAddElleism = Math.random() > 0.6;
+                
+                if (shouldAddElleism) {
+                    return `${text}${this.getRandomElement(elleisms)}`;
+                }
+                return text;
+            }
+
+            capitalizeRandomWord(text) {
+                const words = text.split(' ');
+                if (words.length > 3) {
+                    const randomIndex = Math.floor(Math.random() * words.length);
+                    words[randomIndex] = words[randomIndex].toUpperCase();
+                }
+                return words.join(' ');
+            }
+
+            processResponse(text) {
+                let processed = this.addElleism(text);
+                processed = this.addEmojis(processed);
+                processed = this.capitalizeRandomWord(processed);
+                return processed;
+            }
+
+            // Mental wellbeing specific responses
+            greet() {
+                const greetings = [
+                    "Hey sunshine! I’m your digital hype girl — part pep squad, part heart-to-heart, and 100% here for you. Whether your crown’s slipping or your mood’s doing cartwheels, I’ve got sparkles, support, and sass on standby. Let’s slay today gently, okay?",
+                    "Hi gorgeous! I’m your feel-good bestie in chatbot form. Here to remind you that you're strong, soft, and seriously unstoppable. Need a pep talk, a safe space, or just someone to say ‘you’ve got this’? That’s what I’m here for.",
+                    "Welcome, love. This is your space to breathe, vent, reflect, and reset. No pressure, no perfection — just progress and a lot of self-love. I’m here to cheer you on, hold space for your feelings, and remind you of your power."  
+                ];
+                
+                return this.processResponse(this.getRandomElement(greetings));
+            }
+
+            respondToAnxiety() {
+                const responses = [
+                     "Feeling anxious? First, let's take a deep breath together. In through your nose, out through your mouth. Remember, anxiety is like a really aggressive outfit — sometimes you just need to take it off and try something new!",
+  
+                     "Omigod, anxiety is such a pain! But here's what we're gonna do — we're going to breathe, ground ourselves, and remember that you are WAY stronger than your anxious thoughts!",
+  
+                     "When I'm feeling anxious before a big case, I always remind myself that I've prepared, I'm fabulous, and I deserve to be here. You deserve peace too!",
+
+                     "Hey, it's okay to feel this way. You don’t need to have it all figured out — just focus on getting through the next five minutes. You’ve got this.",
+
+                     "Sweetheart, overthinking is just your brain trying to protect you. Let’s thank it, then tell it to chill for a sec. You’re safe now.",
+
+                     "Your feelings are valid, even if they don’t make sense right now. Breathe, baby. The storm in your head isn’t permanent.",
+
+                     "Let’s do the 3-2-1: name 3 things you see, 2 you can touch, 1 you can hear. That’s how we tell your brain it’s safe.",
+
+                     "Okay babe, inhale confidence, exhale the nonsense. That anxiety doesn’t stand a chance when you’re this powerful.",
+
+                     "If today’s heavy, let’s not carry it all at once. We can break it into moments, and take one soft step at a time.",
+
+                     "You don’t need to be ‘fine’ right now. You just need to be. And that’s more than enough.",
+
+                     "Anxiety says ‘what if everything goes wrong?’ But what if... everything turns out *beautifully*? That’s possible too.",
+
+                     "Gorgeous, let’s try a mantra: I am calm, I am safe, I am in control. Now again, but this time like you mean it.",
+ 
+                     "You’re not too sensitive. You’re just emotionally *in tune*. That’s a superpower, not a flaw.",
+
+                     "Feeling jittery? Let’s shake it out like we’re at a silent disco. Movement helps when your brain won’t chill.",
+
+                     "You are not your anxious thoughts. You are the observer. And the observer is calm, curious, and kind.",
+ 
+                     "This feeling won’t last forever. But your strength? Your sparkle? That’s here to stay.",
+
+                     "Just a reminder — you’ve survived *every* anxious day so far. You’re literally undefeated.",
+
+                     "Hey bestie, anxiety might be loud today, but so is your inner resilience. Let’s drown the drama out with self-love.",
+
+                     "Let’s imagine anxiety like glitter spilled on the floor. It’s annoying, but harmless — and eventually, it *will* be cleaned up.",
+
+                     "You’re doing amazing, even if your brain is being a bit of a drama queen right now. Deep breath. Regroup. Slay."
+                 ];
+                
+                return this.processResponse(this.getRandomElement(responses));
+            }
+
+            provideComfort() {
+                const responses = [
+                    "Whatever you're going through, remember that you have a heart of gold and the strength of platinum! This tough moment is totally temporary.",
+                    "You know what Elle Woods doesn't do? Give up! And neither should you! I believe in you more than I believe in the power of pink!",
+                    "Sometimes life gives you a bad perm, but that doesn't mean your whole look is ruined! This is just a moment, not forever."
+                ];
+                
+                return this.processResponse(this.getRandomElement(responses));
+            }
+
+            suggestSelfCare() {
+                const suggestions = [
+                    "Self-care is like the perfect accessory - it completes every outfit! Try taking a bubble bath, writing in a journal, or maybe treat yourself to a manicure!",
+                    "When I need me-time, I always make sure to do something that makes me smile! Maybe watch your favorite movie, call a friend, or just dance around to your favorite song!",
+                    "The rules of self-care are simple and finite: do something that makes you feel good about yourself! Maybe take a walk with your furry friend, or make that green smoothie you love!"
+                ];
+                
+                return this.processResponse(this.getRandomElement(suggestions));
+            }
+
+            provideMindfulness() {
+                const techniques = [
+                    "Let's try a mindfulness exercise! Focus on five things you can see, four things you can touch, three things you can hear, two things you can smell, and one thing you can taste. Grounding is so fashion-forward right now!",
+
+                    "Mindfulness is like the perfect pair of shoes – it can take you anywhere! Try closing your eyes and just focusing on your breathing for one minute. In and out, just like practicing your bend and snap!",
+
+                    "When my mind is racing faster than me chasing a sale at Barneys, I stop and just notice the present moment. What do you see around you right now? What colors? What shapes? Being present is so chic!",
+
+                    "Try the glitter jar trick! Imagine shaking a snow globe – that’s your brain on stress. Watch it settle in your mind. Calm, sparkly, still. Just like you after a deep breath.",
+
+                    "Light some candles, put on lo-fi beats, and journal it all out like you're writing in your secret burn book (the healing edition). Spilling your thoughts is pure emotional couture!",
+
+                    "Breathe in like you’re smelling a bouquet of peonies, and breathe out like you’re blowing out birthday candles on a cake made of calm. Repeat as needed, darling.",
+
+                    "Name your anxiety like it’s your annoying ex. 'Okay Brad, I hear you, but I’m not entertaining you today.' Detachment is so in this season!",
+
+                    "Try a grounding walk! Even if it’s just to the kitchen. Notice your steps, the way your body moves, the way your slippers make you feel like royalty.",
+
+                    "Feeling panicky? Grab an ice cube and hold it in your hand. Cold therapy = immediate reset. Bonus: it gives 'cool under pressure' realness.",
+
+                    "Visualize your happy place — is it a beach? A library? A pink-tiled bathroom with gold fixtures? Go there in your mind. Stay as long as you need.",
+
+                    "Do a self-hug! Wrap your arms around yourself tight and hold for 30 seconds. It’s not weird, it’s neuroscience. And also super cute.",
+
+                    "Blast your comfort playlist and have a one-person dance party. Movement helps the vibes flow better than matcha lattes on a Monday.",
+
+                    "Write yourself a love note like it’s Valentine’s Day and you are the whole bouquet. Self-love is not a trend, it’s a lifestyle.",
+
+                    "Set a 5-minute timer and clean something tiny — your desk, your makeup drawer, your anxiety. Clarity often starts in your space!",
+
+                    "Create an 'emergency sparkle kit' with things that comfort you: lip gloss, affirmations, fidget rings, memes, crystals, or whatever gives you main character energy.",
+
+                    "Try the 'name three wins' trick: What did you accomplish today? Even if it's 'I showered' or 'I didn't punch anyone.' Celebrate the small stuff, babe.",
+
+                    "Do a 'thought detox' — grab a notebook and write down every single thing your brain is yelling. Rip the page. Burn it (safely). Let it GO, Elsa style.",
+
+                    "Pick one object near you and describe it like you’re on a shopping channel. Texture, color, shape. It’s silly, grounding, and makes your anxiety less bossy.",
+
+                    "Step into your alter ego — the confident, unbothered version of you. What would she say right now? Probably something like: 'Try me, anxiety.'",
+
+                    "Remember: Not every thought deserves a TED Talk. Let it float by like a cloud. You don’t need to host every worry that knocks."
+                ];
+
+                
+                return this.processResponse(this.getRandomElement(techniques));
+            }
+
+            encourageTherapy() {
+                const encouragement = [
+                    "Talking to a professional therapist is like having the perfect personal shopper for your mind! It's not a sign of weakness - it's a sign you're taking fashion-forward steps for your mental health!",
+                    "You know what's, like, super brave? Asking for help when you need it! A therapist can be your mental health stylist, helping you try on new perspectives!",
+                    "Therapy changed my whole outlook faster than my quick-change in the courtroom! There's absolutely no shame in talking to someone who's professionally trained to help!"
+                ];
+                
+                return this.processResponse(this.getRandomElement(encouragement));
+            }
+
+            handleMessage(message) {
+                message = message.toLowerCase();
+                
+                if (message.includes("hello") || message.includes("hi") || message.includes("hey")) {
+                    return this.greet();
+                } else if (message.includes("anxious") || message.includes("anxiety") || message.includes("worried") || message.includes("stress")) {
+                    return this.respondToAnxiety();
+                } else if (message.includes("sad") || message.includes("depressed") || message.includes("unhappy")) {
+                    return this.provideComfort();
+                } else if (message.includes("self-care") || message.includes("self care") || message.includes("take care")) {
+                    return this.suggestSelfCare();
+                } else if (message.includes("mindful") || message.includes("present") || message.includes("focus")) {
+                    return this.provideMindfulness();
+                } else if (message.includes("therapy") || message.includes("therapist") || message.includes("professional help")) {
+                    return this.encourageTherapy();
+                } else {
+                    // Default response with an Elle Woods quote
+                    return this.processResponse("Remember, " + this.getRandomElement(this.encouragements) + " " + this.getRandomElement(this.phrases));
+                }
+            }
+        }
+
+        // DOM elements
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const audioButton = document.getElementById('audio-button');
+
+        // Initialize the bot
+        const elleBot = new ElleWoodsWellbeingBot();
+
+        // Send initial greeting
+        setTimeout(() => {
+            addMessage(elleBot.greet(), 'bot');
+        }, 1000);
+
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        audioButton.addEventListener('click', function() {
+            const isEnabled = elleBot.toggleAudio();
+            audioButton.textContent = isEnabled ? '🔊' : '🔈';
+            
+            if (isEnabled) {
+                addMessage("Audio responses enabled! I'll speak to you now!", 'bot');
+                elleBot.speak("Audio responses enabled! I'll speak to you now!");
+            } else {
+                addMessage("Audio responses disabled! I'll keep it text-only!", 'bot');
+            }
+        });
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                // Add user message
+                addMessage(message, 'user');
+                
+                // Clear input
+                messageInput.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Process response with a slight delay to feel more natural
+                setTimeout(() => {
+                    // Hide typing indicator
+                    hideTypingIndicator();
+                    
+                    // Get and display bot response
+                    const response = elleBot.handleMessage(message);
+                    addMessage(response, 'bot');
+                    
+                    // Text-to-speech if enabled
+                    elleBot.speak(response);
+                }, 1000 + Math.random() * 1000); // Random delay between 1-2 seconds
+            }
+        }
+
+        function addMessage(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', `${sender}-message`);
+            messageElement.textContent = message;
+            
+            // Add timestamp
+            const timeElement = document.createElement('div');
+            timeElement.classList.add('message-time');
+            const now = new Date();
+            timeElement.textContent = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            messageElement.appendChild(timeElement);
+            
+            chatMessages.appendChild(messageElement);
+            
+            // Scroll to the bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingIndicator = document.createElement('div');
+            typingIndicator.classList.add('typing-indicator');
+            typingIndicator.id = 'typing-indicator';
+            
+            // Add the bouncing dots
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('span');
+                typingIndicator.appendChild(dot);
+            }
+            
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // Add floating emojis at intervals
+        setInterval(() => {
+            const emoji = document.createElement('div');
+            emoji.classList.add('emoji-decoration');
+            emoji.style.left = `${Math.random() * 90}%`;
+            emoji.style.top = `${Math.random() * 90}%`;
+            emoji.textContent = ["💖", "💕", "💅", "✨", "👑", "💋", "🌸", "🩷", "💝"][Math.floor(Math.random() * 9)];
+            emoji.style.animationDuration = `${15 + Math.random() * 10}s`;
+            document.body.appendChild(emoji);
+            
+            // Remove after animation
+            setTimeout(() => {
+                emoji.remove();
+            }, 25000);
+        }, 5000);
+    </script>
+</body>
+</html>
